@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        .container h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .response {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Player Login</h1>
+        <form id="loginForm">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <div id="response" class="response"></div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const data = new URLSearchParams();
+            formData.forEach((value, key) => {
+                data.append(key, value);
+            });
+
+            console.log('Form Data:', Array.from(data.entries()));  // Verifique os dados aqui
+
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = '';
+
+            try {
+                const response = await fetch('http://localhost:8080/api.php?action=login', {
+                    method: 'POST',
+                    body: data
+                });
+                const result = await response.json();
+                console.log(result); // Verifique a resposta do servidor
+
+                if (result.success) {
+                    responseDiv.className = 'response success';
+                    responseDiv.innerText = `Welcome, ${result.player.username}!`;
+
+                    // Salvar o token no localStorage
+                    localStorage.setItem('sessionToken', result.player.session_token);
+
+                    // Redirecionar para outra página ou executar ação
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1500);
+                } else {
+                    responseDiv.className = 'response error';
+                    responseDiv.innerText = result.message;
+                }
+            } catch (error) {
+                responseDiv.className = 'response error';
+                responseDiv.innerText = `Error: ${error.message}`;
+            }
+        });
+
+    </script>
+</body>
+
+</html>

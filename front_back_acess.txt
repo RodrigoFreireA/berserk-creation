@@ -1,0 +1,2 @@
+Acessar o Frontend Frontend: Acesse http://localhost:3000/login.html no navegador. 
+Backend: O backend continuará acessível em http://localhost:8080.

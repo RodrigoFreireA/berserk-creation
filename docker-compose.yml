@@ -1,0 +1,40 @@
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend:/var/www/html
+    networks:
+      - berserk-net
+
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    networks:
+      - berserk-net
+
+  database:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: berserk_db
+      MYSQL_USER: berserk_user
+      MYSQL_PASSWORD: berserk_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - berserk-net
+
+volumes:
+  db_data:
+
+networks:
+  berserk-net:
