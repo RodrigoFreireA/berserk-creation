@@ -53,6 +53,25 @@
         button:hover {
             background: #c82333;
         }
+
+        .experience-bar-container {
+            margin-top: 20px;
+        }
+
+        .experience-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .experience-bar-fill {
+            height: 100%;
+            background-color: #28a745;
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+        }
     </style>
 </head>
 
@@ -67,12 +86,23 @@
         <h1>Welcome, <span id="username"></span></h1>
         <div class="player-info">
             <div>Level: <span id="level"></span></div>
-            <div>Experience: <span id="experience"></span></div>
+            <div class="experience-bar-container">
+                <span>Experience: <span id="experience"></span></span>
+                <div class="experience-bar">
+                    <div id="experience-bar-fill" class="experience-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+        <div id="missions">
+            <h2>Available Missions</h2>
+            <ul id="missions-list"></ul>
+            <button id="completeMissionButton" style="display:none;">Complete Mission</button>
         </div>
         <button id="logout">Logout</button>
     </div>
 
     <script>
+        // Função para carregar as informações do jogador
         async function fetchPlayerInfo() {
             const token = localStorage.getItem('sessionToken');
             if (!token) {
@@ -81,7 +111,7 @@
             }
 
             try {
-                const response = await fetch('http://localhost:8080/api.php?action=protected_action', {
+                const response = await fetch('http://localhost:8080/api.php?action=player_info', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: `token=${token}`
@@ -92,6 +122,11 @@
                     document.getElementById('username').innerText = result.player.username;
                     document.getElementById('level').innerText = result.player.level;
                     document.getElementById('experience').innerText = result.player.experience;
+
+                    // Calcula a porcentagem de experiência para a barra
+                    const nextLevelExperience = getExperienceForNextLevel(result.player.level);
+                    const percentage = (result.player.experience / nextLevelExperience) * 100;
+                    document.getElementById('experience-bar-fill').style.width = `${percentage}%`;
                 } else {
                     alert(result.message);
                     window.location.href = 'login.html';
@@ -102,12 +137,66 @@
             }
         }
 
+        // Função que retorna a experiência necessária para o próximo nível
+        function getExperienceForNextLevel(level) {
+            const experienceRequired = [
+                0, 100, 250, 500, 1000, 1500, 2100, 2800, 3600, 4500, 5600, 6800, 8200, 10000, 12000, 14000, 16000, 18000, 20000, 22000, 24000, 26000
+            ];
+            return experienceRequired[level] || 0;
+        }
+
+        // Função para carregar as missões
+        async function fetchMissions() {
+            const token = localStorage.getItem('sessionToken');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8080/api.php?action=player_info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `token=${token}`
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    // Verifica se há missões
+                    const missionsList = document.getElementById('missions-list');
+                    missionsList.innerHTML = '';  // Limpar lista antes de adicionar
+
+                    if (result.missions && result.missions.length > 0) {
+                        result.missions.forEach(mission => {
+                            const li = document.createElement('li');
+                            li.innerHTML = `${mission.name} - ${mission.description}`;
+                            missionsList.appendChild(li);
+                        });
+
+                        // Mostrar o botão de completar missão
+                        document.getElementById('completeMissionButton').style.display = 'block';
+                    } else {
+                        missionsList.innerHTML = '<li>No available missions</li>';
+                        document.getElementById('completeMissionButton').style.display = 'none';
+                    }
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Logout
         document.getElementById('logout').addEventListener('click', () => {
             localStorage.removeItem('sessionToken');
             window.location.href = 'login.html';
         });
 
+        // Inicia a execução das funções
         fetchPlayerInfo();
+        fetchMissions();
     </script>
 </body>
 
